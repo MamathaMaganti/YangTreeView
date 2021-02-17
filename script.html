@@ -1,0 +1,252 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.9/ace.js"></script>
+<script src="yang.js"></script>
+<script type="text/javascript">
+
+// var yang = new yang();
+$( document ).ready(function() {
+
+var data = `module ibm15m {
+//   namespace "http://com/example/ibm15m";
+//   prefix ibm15m;
+ 
+//   import ietf-inet-types {
+//     prefix inet;
+//   }
+//   import tailf-common {
+//     prefix tailf;
+//   }
+//   import tailf-ncs {
+//     prefix ncs;
+//   }
+ 
+  list ibm15m {
+    key project_name;
+ 
+    // uses ncs:service-data;
+    // ncs:servicepoint "ibm15m";
+ 
+    leaf project_name {
+    //   tailf:info "Unique Project Name";
+      type string;
+    }
+ 
+    leaf project_id {
+        type string;
+        // tailf:info "Unique service id";
+   }
+ 
+    leaf peer_ip_address {
+        type string;
+        // tailf:info "Peer IP Address";
+    }
+ 
+    leaf service_type {
+        type string;
+        // tailf:info "Service Type";
+    }
+ 
+    leaf proj_description {
+        type string;
+        // tailf:info "Project description";
+    }
+ 
+    leaf permit_all {
+        type boolean;
+        // tailf:info "Permit ALL";
+    }
+ 
+    leaf ip_list {
+        type string;
+        // tailf:info "IP Address List";
+    }
+ 
+    leaf fqdn_list {
+        type string;
+        // tailf:info "FQDN List";
+    }
+ 
+    leaf gateway_ip {
+        type string;
+        // tailf:info "Gateway IP";
+    }
+ 
+ 
+ 
+    list internal-user-list {
+        // tailf:info "User Name";
+        key username;
+        leaf username {
+                type string;
+                // tailf:info "User Name";
+        }
+        leaf userid {
+                type string;
+                // tailf:info "User ID";
+        }
+        leaf valnid {
+                type string;
+                // tailf:info "VLAN ID";
+        }
+        leaf endpoint_ip_address {
+                type string;
+                // tailf:info "END POINT IP ADDRESS";
+        }
+    }
+ 
+  }
+}`;
+model = Yang.parse(data);
+console.log(model.toJSON());
+
+$("#xmlArea").val(JSON.stringify(model.toJSON(), undefined, 2));
+});
+
+// function displayInfoOfConfig(element) {
+//             var selectedConfigToFetch = $("#"+element).val();
+//             $.ajax({
+//                    type: "POST",
+//                    url: '/treeview',
+//                    data: {'selectedConfigToFetch': selectedConfigToFetch}, // serializes the form's elements.
+//                    success: function(data)
+//                    {
+//                    alert(data);
+//                        $('#xmlArea').val(data);
+//                    },
+//                    error: function(data)
+//                    {
+//                        alert("error");
+//                    }
+//                 });
+//         }
+
+async function readText(event) {
+  const file = event.target.files.item(0)
+  const text = await file.text();
+  
+  var filePath = $("#inputFile").val(); 
+  var file_ext = filePath.substr(filePath.lastIndexOf('.')+1,filePath.length);
+  console.log("File Extension ->-> "+file_ext);
+  if(file_ext == "yang"){
+    yamleditor.getSession().setValue(text);
+    yamleditor.getSession().on('change', function () {
+        $("#yamlArea").val(yamleditor.getSession().getValue());
+        
+   });
+  }
+}
+
+function download(selectedTextArea){
+    var text = document.getElementById(selectedTextArea).value;
+    text = text.replace(/\n/g, "\r\n"); // To retain the Line breaks.
+    var anchor = document.createElement("a");
+    if(selectedTextArea.indexOf("yaml") != -1) {
+        var blob = new Blob([text], { type: "text/yaml"});
+        anchor.download = "convertor_content.yaml";
+    }
+    anchor.href = window.URL.createObjectURL(blob);
+    anchor.target ="_blank";
+    anchor.style.display = "none"; // just to be safe!
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+ }
+
+ function copy(textareaToSelect){
+    $("#"+textareaToSelect).select();
+    document.execCommand('copy');
+ }
+
+ function clearText(textareaToSelect){
+     if(textareaToSelect.indexOf('yaml') != -1) {
+        yamleditor.setValue('');
+        $("#yamlArea").val('');
+    }
+ }
+
+$(function() {
+      $('textarea[data-editor="yaml"]').each(function() {
+      var textarea = $(this);
+      var mode = textarea.data('editor');
+      var editDiv = $('<div>', {
+        position: 'absolute',
+        width: textarea.width(),
+        height: textarea.height(),
+        'class': textarea.attr('class')
+      }).insertBefore(textarea);
+      // textarea.css('display', 'none');
+      textarea.css('position', 'absolute');
+      textarea.css('opacity', '.01');
+      textarea.css('height', '0');
+      textarea.css('overflow', 'hidden');
+      yamleditor = ace.edit(editDiv[0]);
+      yamleditor.renderer.setShowGutter(textarea.data('gutter'));
+      yamleditor.getSession().setValue(textarea.val());
+      yamleditor.getSession().setMode("ace/mode/" + mode);
+      yamleditor.setTheme("ace/theme/Xcode");
+  
+      yamleditor.getSession().on('change', function () {
+          if(mode == "yaml") {
+              $("#yamlArea").val(yamleditor.getSession().getValue());
+          }
+          
+     });
+      });
+  });
+  </script>
+  <style>
+    .editTestArea {
+       border: 1px solid;
+    }
+</style>
+<body>
+    
+    <div class="container-fluid" style="margin: auto;" >
+        <h1 style="width: 300px; margin-left: auto; margin-right: auto; color: rgb(42, 165, 52);">YANG TreeView</h1>
+        <div class="section" style="margin-top: 50px;">
+            <!-- <input type="file" class="fa fa-upload" id="inputFile" onchange="readText(event)" >
+            </input> -->
+            <div style="position:relative;">
+                <a class='fa fa-upload btn btn-primary' href='javascript:;'>
+                    Choose File...
+                    <input id="inputFile" type="file" style='position:absolute;z-index:2;top:0;left:0;filter: alpha(opacity=0);-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";opacity:0;background-color:transparent;color:transparent;' name="file_source" size="40"  
+                    onchange='$("#upload-file-info").html(($(this).val()).replace("C:\\fakepath\\", "")); readText(event)'>
+                </a>
+                &nbsp;
+                <span class='label label-info' style="font-size: small;" id="upload-file-info"></span>
+            </div>
+            
+            
+        </div>
+        
+        <div class="row" style="margin: auto;">
+          <div class="col-sm-5 col-xs-5">
+            <h4>Yaml:</h4>
+            <textarea class="editTestArea" style="box-shadow: 0 0 8px 2px rgba(0, 0, 0, 0.2);" id="yamlArea" name="my-yaml-editor" data-editor="yaml" data-gutter="1" cols="80" rows="25"></textarea>
+            <div>
+                <button class="btn btn-info glyphicon glyphicon-download-alt" title="Download" style="float: right; margin-right:12%; margin-top: 20px; background-color: #4c8baf;" type="button" onclick="download('yamlArea')"></button>
+                <button class="btn btn-info glyphicon glyphicon-remove" title="Clear text" style="float: right; margin-top: 20px; margin-right: 10px; background-color: #4c8baf;" type="button" onclick="clearText('yamlArea')"></button>
+                <button class="btn btn-info glyphicon glyphicon-copy" title="Copy to clipboard" style="float: right; margin-top: 20px; margin-right: 10px; background-color: #4c8baf;" type="button" onclick="copy('yamlArea')"></button>
+            </div>
+            
+          </div>
+          <div class="col-sm-2 col-xs-2" style="padding-right: 240px ;margin-top: 250px;">
+            <button class="btn btn-info" onclick="displayInfoOfConfig('yamlArea')" style="margin-left: 27%;">Get TreeView from Yang</button>
+          </div>
+          <div class="col-sm-5 col-xs-5" style="float: right;">
+            <h4>TreeView:</h4>
+            <textarea class="editTestArea" style="box-shadow: 0 0 8px 2px rgba(0, 0, 0, 0.2);" id="xmlArea" name="my-xml-editor" data-editor="xml" data-gutter="1" cols="80" rows="25"></textarea>
+            <div >
+                <button class="btn btn-info glyphicon glyphicon-download-alt" title="Download" style=" position: relative;  float: right; margin-right: 12%; margin-top: 20px; background-color: #4c8baf;" type="button" onclick="download('xmlArea')"></button>
+                <button class="btn btn-info glyphicon glyphicon-remove" title="Clear text" style="float: right; margin-top: 20px; margin-right: 10px; background-color: #4c8baf;" type="button" onclick="clearText('xmlArea')"></button>
+                <button class="btn btn-info glyphicon glyphicon-copy" title="Copy to clipboard" style="float: right; margin-top: 20px; margin-right: 10px; background-color: #4c8baf;" type="button" onclick="copy('xmlArea')"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+   
+</body>
